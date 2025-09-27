@@ -1,9 +1,12 @@
-from flask import Flask, render_template, request, redirect, flash, url_for, send_from_directory
+from flask import Flask, render_template, request, redirect, flash, url_for, send_from_directory, jsonify
 import os
 import yaml
+import operator
 from pathlib import Path
 
 from werkzeug.utils import secure_filename
+
+from fileDescription import FileDescription, FileDescriptionEncoder
 
 app = Flask(__name__, template_folder='templates')
 
@@ -21,6 +24,27 @@ if os.path.isfile('parameter.yml'):
 def index():
     print("I do >index<")
     return render_template('index.html', items=os.listdir(UPLOAD_FOLDER))
+
+
+def toFileDescriptor(filename):
+    states = os.stat(str(Path.cwd()) + "/" + UPLOAD_FOLDER + "/" + filename)
+    return FileDescription(filename, states.st_size, states.st_mtime)
+
+
+def toEncoder(file_description):
+    return FileDescriptionEncoder().encode(file_description)
+
+
+@app.route('/files', methods=['GET'])
+def listFile():
+    print("I do >listFile<", request.method)
+    if request.method == 'GET':
+        files = os.listdir(UPLOAD_FOLDER)
+        file_descriptors = sorted(list(map(toFileDescriptor, files)), key=operator.attrgetter('created'), reverse=True)
+        encoded_file_descriptors = list(map(toEncoder, file_descriptors))
+        return jsonify(results=encoded_file_descriptors)
+    return ''
+
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
