@@ -1,0 +1,4 @@
+file:
+  directory: /some/path
+server:
+  sub_url: /suburl

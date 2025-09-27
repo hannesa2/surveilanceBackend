@@ -1,0 +1,57 @@
+name: build
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  build-gitx:
+    name: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-22.04, macos-12 ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+          submodules: recursive
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Python install
+        if: ${{ matrix.os == 'macos-12' }}
+        run: brew install python@3.12
+      - name: Python version
+        run: python --version
+      - name: Install command timeout
+        if: ${{ matrix.os == 'macos-12' }}
+        run: brew install coreutils
+      - name: Install requirements
+        run: |
+          rm -rf venv/
+          python -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+      - name: Lint with Ruff
+        run: |
+          pip install ruff
+          ruff --output-format=github .
+        continue-on-error: false
+      - name: run
+        run: |
+          source venv/bin/activate
+          timeout 5s python3 main.py || if [[ $? == 124 ]]; then
+                echo "Ok: Authentication timed out after 5s!"
+                exit 0
+            else
+                returnCode=$?
+                echo "Error: return code is $?"
+                exit $returnCode
+            fi
