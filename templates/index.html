@@ -9,7 +9,7 @@
         <input type="text" name="name" placeholder="Enter file name" required>
         <input type="submit" value="Create">
     </form>
-    <h2>Files:</h2>
+    <h2>List all files:</h2>
     <ul>
         {% for item in items %}
             <li>{{ item }}</li>
@@ -23,13 +23,13 @@
         <input type="submit" value="Update">
     </form>
     <hr>
-    <h2>Delete File:</h2>
+    <h2>Delete file: /delete</h2>
     <form action="/delete" method="post">
         <input type="text" name="name" placeholder="File name" required>
         <input type="submit" value="Delete">
     </form>
     <hr>
-    <h2>Get File:</h2>
+    <h2>Get one file with /get:</h2>
     <form action="/get" method="get">
         <input type="text" name="name" placeholder="File name" required>
         <input type="submit" value="Get">

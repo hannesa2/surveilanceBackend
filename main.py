@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, flash, url_for, send_from_directory
 import os
 import yaml
+from pathlib import Path
 
 from werkzeug.utils import secure_filename
 
@@ -18,6 +19,7 @@ if os.path.isfile('parameter.yml'):
 
 @app.route('/')
 def index():
+    print("I do >index<")
     return render_template('index.html', items=os.listdir(UPLOAD_FOLDER))
 
 @app.route('/', methods=['GET', 'POST'])
@@ -107,4 +109,5 @@ if __name__ == '__main__':
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
     app.config['MAX_CONTENT_LENGTH'] = 6000024
     items = os.listdir(UPLOAD_FOLDER)
+    print("UPLOAD_FOLDER=" + str(Path.cwd()) + "/" + UPLOAD_FOLDER)
     app.run(host="0.0.0.0", debug=True, port=5001)
