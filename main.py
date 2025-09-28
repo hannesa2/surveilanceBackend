@@ -1,6 +1,5 @@
 import operator
 import os
-from pathlib import Path
 
 import yaml
 from flask import Flask, render_template, request, jsonify
@@ -93,6 +92,61 @@ def delete_movie(webcam, filetype, name):
         print(f"File '{complete_name}' not found.")
 
     return list_movies(filetype)
+
+
+@app.route('/log/<webcam>/<count>', methods=['GET'])
+def log(webcam, count):
+    print("I do >/log/" + webcam + "/" + count + "<", request.method)
+    return "log not implemented" # TODO
+
+
+@app.route('/logpage/<webcam>/<count>/<skip>', methods=['GET'])
+def logpage(webcam, count, skip):
+    print("I do >/logpage/" + webcam + "/" + count + "/" + skip + "<", request.method)
+    return "logpage not implemented" # TODO
+
+
+@app.route('/brightness/<webcam>/<count>/<skip>', methods=['GET'])
+def brightness(webcam, count, skip):
+    print("I do >/brightness/" + webcam + "/" + count + "/" + skip + "<", request.method)
+    return "brightness not implemented" # TODO
+
+
+@app.route('/files4movie/<webcam>/<moviename>', methods=['GET'])
+def files4movie(webcam, moviename):
+    print("I do >/files4movie/" + webcam + "/" + moviename + "<", request.method)
+    return "files4movie not implemented" # TODO
+
+
+@app.route('/reload/<webcam>', methods=['GET'])
+def reload(webcam):
+    print("I do >/reload/" + webcam + "<", request.method)
+    return "reload not implemented" # TODO
+
+
+@app.route('/restart/<webcam>', methods=['GET'])
+def restart(webcam):
+    print("I do >/restart/" + webcam + "<", request.method)
+    return "restart not implemented" # TODO
+
+
+# Streaming
+@app.route('/img/<webcam>/<size>/<name>', methods=['GET'])
+def img(webcam, size, name):
+    print("I do >/img/" + webcam + "/" + size + "/" + name + "<", request.method)
+    return "img not implemented" # TODO
+
+
+@app.route('/movie/<webcam>/<name>', methods=['GET'])
+def movie(webcam, name):
+    print("I do >/movie/" + webcam + name + "<", request.method)
+    return "movie not implemented" # TODO
+
+
+@app.route('/pictures/img/<webcam>/<size>/<id>', methods=['GET'])
+def pictures(webcam, size, id):
+    print("I do >/movie/" + webcam + "/" + size + "/" + id + "<", request.method)
+    return "pictures as bitmap not implemented" # TODO
 
 
 if __name__ == '__main__':
