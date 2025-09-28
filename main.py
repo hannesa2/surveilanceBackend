@@ -1,23 +1,22 @@
-from flask import Flask, render_template, request, redirect, flash, url_for, send_from_directory, jsonify
-import os
-import yaml
 import operator
+import os
 from pathlib import Path
 
-from werkzeug.utils import secure_filename
+import yaml
+from flask import Flask, render_template, request, jsonify
 
 from fileDescription import FileDescription, FileDescriptionEncoder
 
 app = Flask(__name__, template_folder='templates')
 
-UPLOAD_FOLDER = "files"
-ALLOWED_EXTENSIONS = {'txt', 'png', 'jpg', 'jpeg', 'gif'}
+UPLOAD_FOLDER = "./files"
 
 if os.path.isfile('parameter.yml'):
     with open('parameter.yml', 'r') as file:
         prime_service = yaml.safe_load(file)
         if __name__ == '__main__':
             UPLOAD_FOLDER = prime_service['file']['directory']
+            print("Use from parameter.yml UPLOAD_FOLDER=" + UPLOAD_FOLDER)
 
 
 @app.route('/')
@@ -86,6 +85,8 @@ def delete_movie(filetype, name):
 
 
 if __name__ == '__main__':
+    print("UPLOAD_FOLDER=" + UPLOAD_FOLDER)
+    # print("UPLOAD_FOLDER=" + str(Path.cwd()) + "/" + UPLOAD_FOLDER)
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
 
@@ -93,5 +94,4 @@ if __name__ == '__main__':
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
     app.config['MAX_CONTENT_LENGTH'] = 6000024
     items = os.listdir(UPLOAD_FOLDER)
-    print("UPLOAD_FOLDER=" + str(Path.cwd()) + "/" + UPLOAD_FOLDER)
     app.run(host="0.0.0.0", debug=True, port=5001)
