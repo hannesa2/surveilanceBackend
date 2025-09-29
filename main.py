@@ -1,6 +1,7 @@
 import io
 import operator
 import os
+import subprocess
 
 import yaml
 from PIL import Image
@@ -44,6 +45,11 @@ def toEncoder(file_description):
 def absolute_file_paths(directory):
     path = os.path.abspath(directory)
     return [entry.path for entry in os.scandir(path) if entry.is_file()]
+
+
+@app.route('/version')
+def version():
+    return subprocess.check_output(['git', 'describe', '--tags']).decode('ascii').strip()
 
 
 @app.route('/files/<webcam>', methods=['GET'])
