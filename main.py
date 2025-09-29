@@ -1,8 +1,10 @@
+import io
 import operator
 import os
 
 import yaml
-from flask import Flask, render_template, request, jsonify
+from PIL import Image
+from flask import Flask, render_template, request, jsonify, send_file
 
 from fileDescription import FileDescription, FileDescriptionEncoder
 
@@ -25,14 +27,14 @@ def index():
 
 
 def withWebCam(filename, webcam_name):
-    return webcam_name + "/" + filename
+    return UPLOAD_FOLDER + "/" + webcam_name + "/" + filename
 
 
 def toFileDescriptor(absolute_filename):
     states = os.stat(absolute_filename)
     web_cam = str(absolute_filename).split('/')[-2]
     file_name = str(absolute_filename).split('/')[-1]
-    return FileDescription(web_cam + "/" + file_name, states.st_size, states.st_mtime)
+    return FileDescription(file_name, web_cam, states.st_size, states.st_mtime)
 
 
 def toEncoder(file_description):
@@ -97,56 +99,66 @@ def delete_movie(webcam, filetype, name):
 @app.route('/log/<webcam>/<count>', methods=['GET'])
 def log(webcam, count):
     print("I do >/log/" + webcam + "/" + count + "<", request.method)
-    return "log not implemented" # TODO
+    return "log not implemented"  # TODO
 
 
 @app.route('/logpage/<webcam>/<count>/<skip>', methods=['GET'])
 def logpage(webcam, count, skip):
     print("I do >/logpage/" + webcam + "/" + count + "/" + skip + "<", request.method)
-    return "logpage not implemented" # TODO
+    return "logpage not implemented"  # TODO
 
 
 @app.route('/brightness/<webcam>/<count>/<skip>', methods=['GET'])
 def brightness(webcam, count, skip):
     print("I do >/brightness/" + webcam + "/" + count + "/" + skip + "<", request.method)
-    return "brightness not implemented" # TODO
+    return "brightness not implemented"  # TODO
 
 
 @app.route('/files4movie/<webcam>/<moviename>', methods=['GET'])
 def files4movie(webcam, moviename):
     print("I do >/files4movie/" + webcam + "/" + moviename + "<", request.method)
-    return "files4movie not implemented" # TODO
+    filter = str(moviename).split("/", 1)[0][0:11].lower()
+    files = absolute_file_paths(UPLOAD_FOLDER + "/" + webcam)
+    listed = list(map(toFileDescriptor, files))
+    filtered_listed = [s for s in listed if str(s.name).lower().endswith(str(".jpg").lower()) and str(s.name).lower().find(filter) > 0]
+    encoded_file_descriptors = list(map(toEncoder, filtered_listed))
+    return jsonify(results=encoded_file_descriptors)
 
 
 @app.route('/reload/<webcam>', methods=['GET'])
 def reload(webcam):
     print("I do >/reload/" + webcam + "<", request.method)
-    return "reload not implemented" # TODO
+    return "reload not implemented"  # TODO
 
 
 @app.route('/restart/<webcam>', methods=['GET'])
 def restart(webcam):
     print("I do >/restart/" + webcam + "<", request.method)
-    return "restart not implemented" # TODO
+    return "restart not implemented"  # TODO
 
 
 # Streaming
 @app.route('/img/<webcam>/<size>/<name>', methods=['GET'])
-def img(webcam, size, name):
+def imgSize(webcam, size, name):
     print("I do >/img/" + webcam + "/" + size + "/" + name + "<", request.method)
-    return "img not implemented" # TODO
+    image = Image.open(withWebCam(name, webcam))
+    image.thumbnail((int(size), int(size)))
+    img_io = io.BytesIO()
+    image.save(img_io, 'JPEG', quality=90)
+    img_io.seek(0)
+    return send_file(img_io, mimetype='image/jpeg')
 
 
 @app.route('/movie/<webcam>/<name>', methods=['GET'])
 def movie(webcam, name):
     print("I do >/movie/" + webcam + name + "<", request.method)
-    return "movie not implemented" # TODO
+    return send_file(withWebCam(name, webcam), mimetype='image/gif')
 
 
 @app.route('/pictures/img/<webcam>/<size>/<id>', methods=['GET'])
 def pictures(webcam, size, id):
-    print("I do >/movie/" + webcam + "/" + size + "/" + id + "<", request.method)
-    return "pictures as bitmap not implemented" # TODO
+    print("I do >/pictures/" + webcam + "/" + size + "/" + id + "<", request.method)
+    return "pictures as bitmap not implemented"  # TODO
 
 
 if __name__ == '__main__':
