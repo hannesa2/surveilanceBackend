@@ -2,3 +2,4 @@
 files/
 venv
 parameter.yml
+__pycache__
