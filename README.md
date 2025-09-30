@@ -1,6 +1,4 @@
-# Simply CRUD backend
-
-It's used to store screenshots in github pull requests
+# Master surveilance backend on latitude
 
 ## Configure
 
@@ -12,9 +10,9 @@ https://medium.com/codex/setup-a-python-script-as-a-service-through-systemctl-sy
 
 https://git.mxtracks.info/linuxserver/etcUbuntu/-/commit/0470cf3fbeb20015a163937a072974bf249e34f7
 ```
-sudo vi /etc/systemd/system/githubArtifactsPy.service
+sudo vi /etc/systemd/system/kameraBackendPy.service
 sudo systemctl daemon-reload
-sudo systemctl start githubArtifactsPy.service
+sudo systemctl start kameraBackendPy.service
 ```
 
 ## Usage
