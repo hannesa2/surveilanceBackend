@@ -59,7 +59,7 @@ def listFile(webcam):
         files = absolute_file_paths(UPLOAD_FOLDER + "/" + webcam)
         file_descriptors = sorted(list(map(toFileDescriptor, files)), key=operator.attrgetter('created'), reverse=True)
         encoded_file_descriptors = list(map(toEncoder, file_descriptors))
-        return jsonify(results=encoded_file_descriptors)
+        return jsonify(encoded_file_descriptors)
     return ''
 
 
@@ -72,7 +72,7 @@ def listAvi(webcam):
         filtered_listed = [s for s in listed if str(s.name).lower().endswith(".avi")]
         file_descriptors = sorted(filtered_listed, key=operator.attrgetter('created'), reverse=True)
         encoded_file_descriptors = list(map(toEncoder, file_descriptors))
-        return jsonify(results=encoded_file_descriptors)
+        return jsonify(encoded_file_descriptors)
     return ''
 
 
@@ -85,8 +85,9 @@ def list_movies(filetype, webcam):
         filtered_listed = [s for s in listed if str(s.name).lower().endswith(str(filetype).lower())]
         file_descriptors = sorted(filtered_listed, key=operator.attrgetter('created'), reverse=True)
         encoded_file_descriptors = list(map(toEncoder, file_descriptors))
-        return jsonify(results=encoded_file_descriptors)
-    return request.method + ' not supported'
+        return jsonify(encoded_file_descriptors)
+    else:
+        return request.method + ' not supported'
 
 
 @app.route('/deletemovie/<webcam>/<filetype>/<name>', methods=['GET'])
@@ -128,7 +129,7 @@ def files4movie(webcam, moviename):
     listed = list(map(toFileDescriptor, files))
     filtered_listed = [s for s in listed if str(s.name).lower().endswith(str(".jpg").lower()) and str(s.name).lower().find(filter) > 0]
     encoded_file_descriptors = list(map(toEncoder, filtered_listed))
-    return jsonify(results=encoded_file_descriptors)
+    return jsonify(encoded_file_descriptors)
 
 
 @app.route('/reload/<webcam>', methods=['GET'])
