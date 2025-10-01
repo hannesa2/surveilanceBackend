@@ -76,7 +76,7 @@ def listAvi(webcam):
     return ''
 
 
-@app.route('/movies/<filetype>/<webcam>', methods=['GET'])
+@app.route('/movies/<webcam>/<filetype>', methods=['GET'])
 def list_movies(filetype, webcam):
     print("I do >/movies/" + filetype + "," + webcam + "<", request.method)
     if request.method == 'GET':
