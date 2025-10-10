@@ -1,13 +1,10 @@
 import io
-import operator
 import os
 import subprocess
 
 import yaml
 from PIL import Image
 from flask import Flask, render_template, request, jsonify, send_file
-
-from fileDescription import FileDescription, FileDescriptionEncoder
 
 app = Flask(__name__, template_folder='templates')
 
@@ -31,17 +28,6 @@ def withWebCam(filename, webcam_name):
     return UPLOAD_FOLDER + "/" + webcam_name + "/" + filename
 
 
-def toFileDescriptor(absolute_filename):
-    states = os.stat(absolute_filename)
-    web_cam = str(absolute_filename).split('/')[-2]
-    file_name = str(absolute_filename).split('/')[-1]
-    return FileDescription(file_name, web_cam, states.st_size, states.st_mtime)
-
-
-def toEncoder(file_description):
-    return FileDescriptionEncoder().encode(file_description)
-
-
 def absolute_file_paths(directory):
     path = os.path.abspath(directory)
     return [entry.path for entry in os.scandir(path) if entry.is_file()]
@@ -49,17 +35,45 @@ def absolute_file_paths(directory):
 
 @app.route('/version')
 def version():
-    return subprocess.check_output(['git', 'describe', '--tags']).decode('ascii').strip()
+    try:
+        return subprocess.check_output(['git', 'describe', '--tags']).decode('ascii').strip()
+    except PermissionError:
+        return jsonify({'error': 'Permission denied'}), 403
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/files/<webcam>', methods=['GET'])
 def listFile(webcam):
     print("I do >/files/" + webcam + "<", request.method)
     if request.method == 'GET':
-        files = absolute_file_paths(UPLOAD_FOLDER + "/" + webcam)
-        file_descriptors = sorted(list(map(toFileDescriptor, files)), key=operator.attrgetter('created'), reverse=True)
-        encoded_file_descriptors = list(map(toEncoder, file_descriptors))
-        return jsonify(encoded_file_descriptors)
+        # Validate path exists and is a directory
+        if not os.path.exists(UPLOAD_FOLDER + "/" + webcam):
+            return jsonify({'error': 'Path does not exist ' + UPLOAD_FOLDER + "/" + webcam}), 404
+
+        if not os.path.isdir(UPLOAD_FOLDER + "/" + webcam):
+            return jsonify({'error': 'Path is not a directory ' + UPLOAD_FOLDER + "/" + webcam}), 400
+
+        files_info = []
+        for item in absolute_file_paths(UPLOAD_FOLDER + "/" + webcam):
+            item_path = os.path.join(UPLOAD_FOLDER + "/" + webcam, item)
+
+            stats = os.stat(item_path)
+
+            file_info = {
+                'name': item,
+                'webcam': webcam,
+                'size': stats.st_size,
+                'size_readable': format_size(stats.st_size),
+                'created': stats.st_ctime,
+            }
+
+            files_info.append(file_info)
+
+        # Sort by filename
+        files_info.sort(key=lambda x: x['created'])
+
+        return jsonify(files_info), 200
     return ''
 
 
@@ -67,27 +81,51 @@ def listFile(webcam):
 def listAvi(webcam):
     print("I do >/avi/" + webcam + "<", request.method)
     if request.method == 'GET':
-        files = absolute_file_paths(UPLOAD_FOLDER + "/" + webcam)
-        listed = list(map(toFileDescriptor, files))
-        filtered_listed = [s for s in listed if str(s.name).lower().endswith(".avi")]
-        file_descriptors = sorted(filtered_listed, key=operator.attrgetter('created'), reverse=True)
-        encoded_file_descriptors = list(map(toEncoder, file_descriptors))
-        return jsonify(encoded_file_descriptors)
+        return list_movies("avi", webcam)
     return ''
 
 
 @app.route('/movies/<webcam>/<filetype>', methods=['GET'])
 def list_movies(filetype, webcam):
-    print("I do >/movies/" + filetype + "," + webcam + "<", request.method)
+    print("I do >/movies/" + filetype + "/" + webcam + "<", request.method)
+    extensions_simple = [ext.strip().lower() for ext in filetype.split(',')]
+    extensions = [f"{'.'}{s}" for s in extensions_simple]  # add a leading '.'
+
     if request.method == 'GET':
-        files = absolute_file_paths(UPLOAD_FOLDER + "/" + webcam)
-        listed = list(map(toFileDescriptor, files))
-        filtered_listed = [s for s in listed if str(s.name).lower().endswith(str(filetype).lower())]
-        file_descriptors = sorted(filtered_listed, key=operator.attrgetter('created'), reverse=True)
-        encoded_file_descriptors = list(map(toEncoder, file_descriptors))
-        return jsonify(encoded_file_descriptors)
-    else:
-        return request.method + ' not supported'
+        # Validate path exists and is a directory
+        if not os.path.exists(UPLOAD_FOLDER + "/" + webcam):
+            return jsonify({'error': 'Path does not exist ' + UPLOAD_FOLDER + "/" + webcam}), 404
+
+        if not os.path.isdir(UPLOAD_FOLDER + "/" + webcam):
+            return jsonify({'error': 'Path is not a directory ' + UPLOAD_FOLDER + "/" + webcam}), 400
+
+        files_info = []
+        for item in absolute_file_paths(UPLOAD_FOLDER + "/" + webcam):
+            # for item in os.listdir(UPLOAD_FOLDER + "/" + webcam):
+            _, file_ext = os.path.splitext(item)
+            # Include files matching extension
+            if file_ext.lower() not in extensions:
+                continue
+
+            item_path = os.path.join(UPLOAD_FOLDER + "/" + webcam, item)
+
+            stats = os.stat(item_path)
+
+            file_info = {
+                'name': item,
+                'webcam': webcam,
+                'size': stats.st_size,
+                'size_readable': format_size(stats.st_size),
+                'created': stats.st_ctime,
+            }
+
+            files_info.append(file_info)
+
+        # Sort by filename
+        files_info.sort(key=lambda x: x['created'])
+
+        return jsonify(files_info), 200
+    return None
 
 
 @app.route('/deletemovie/<webcam>/<filetype>/<name>', methods=['GET'])
@@ -124,12 +162,44 @@ def brightness(webcam, count, skip):
 @app.route('/files4movie/<webcam>/<moviename>', methods=['GET'])
 def files4movie(webcam, moviename):
     print("I do >/files4movie/" + webcam + "/" + moviename + "<", request.method)
-    filter = str(moviename).split("/", 1)[0][0:11].lower()
-    files = absolute_file_paths(UPLOAD_FOLDER + "/" + webcam)
-    listed = list(map(toFileDescriptor, files))
-    filtered_listed = [s for s in listed if str(s.name).lower().endswith(str(".jpg").lower()) and str(s.name).lower().find(filter) > 0]
-    encoded_file_descriptors = list(map(toEncoder, filtered_listed))
-    return jsonify(encoded_file_descriptors)
+    # Validate path exists and is a directory
+    if not os.path.exists(UPLOAD_FOLDER + "/" + webcam):
+        return jsonify({'error': 'Path does not exist ' + UPLOAD_FOLDER + "/" + webcam}), 404
+
+    if not os.path.isdir(UPLOAD_FOLDER + "/" + webcam):
+        return jsonify({'error': 'Path is not a directory ' + UPLOAD_FOLDER + "/" + webcam}), 400
+
+    files_info = []
+    extensions = ['.jpg']
+    filter_movie_name = str(moviename).split("/", 1)[0][0:11].lower()
+    for item in absolute_file_paths(UPLOAD_FOLDER + "/" + webcam):
+        # for item in os.listdir(UPLOAD_FOLDER + "/" + webcam):
+        _, file_ext = os.path.splitext(item)
+        # Include files matching extension
+        if file_ext.lower() not in extensions:
+            continue
+
+        if item.find(filter_movie_name) == -1:
+            continue
+
+        item_path = os.path.join(UPLOAD_FOLDER + "/" + webcam, item)
+
+        stats = os.stat(item_path)
+
+        file_info = {
+            'name': item,
+            'webcam': webcam,
+            'size': stats.st_size,
+            'size_readable': format_size(stats.st_size),
+            'created': stats.st_ctime,
+        }
+
+        files_info.append(file_info)
+
+    # Sort by filename
+    files_info.sort(key=lambda x: x['created'])
+
+    return jsonify(files_info), 200
 
 
 @app.route('/reload/<webcam>', methods=['GET'])
@@ -166,6 +236,21 @@ def movie(webcam, name):
 def pictures(webcam, size, id):
     print("I do >/pictures/" + webcam + "/" + size + "/" + id + "<", request.method)
     return "pictures as bitmap not implemented"  # TODO
+
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Simple health check endpoint"""
+    return jsonify({'status': 'healthy'}), 200
+
+
+def format_size(bytes_given):
+    """Convert bytes to human-readable format"""
+    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if bytes_given < 1024.0:
+            return f"{bytes_given:.2f} {unit}"
+        bytes_given /= 1024.0
+    return f"{bytes_given:.2f} PB"
 
 
 if __name__ == '__main__':
