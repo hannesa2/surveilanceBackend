@@ -40,7 +40,12 @@ def version():
     except PermissionError:
         return jsonify({'error': 'Permission denied'}), 403
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        where = "undefined"
+        try:
+            where = subprocess.check_output(['whereis', 'git']).decode('ascii').strip()
+        except Exception as e_where:
+            jsonify({'error': str(e)}, {'whereis git': str(e_where)}), 500
+        return jsonify({'error': str(e)}, {'whereis git': str(where)}), 500
 
 
 @app.route('/files/<webcam>', methods=['GET'])
@@ -55,7 +60,8 @@ def listFile(webcam):
             return jsonify({'error': 'Path is not a directory ' + UPLOAD_FOLDER + "/" + webcam}), 400
 
         files_info = []
-        for item in absolute_file_paths(UPLOAD_FOLDER + "/" + webcam):
+        #for item in absolute_file_paths(UPLOAD_FOLDER + "/" + webcam):
+        for item in os.listdir(UPLOAD_FOLDER + "/" + webcam):
             item_path = os.path.join(UPLOAD_FOLDER + "/" + webcam, item)
 
             stats = os.stat(item_path)
@@ -100,8 +106,8 @@ def list_movies(filetype, webcam):
             return jsonify({'error': 'Path is not a directory ' + UPLOAD_FOLDER + "/" + webcam}), 400
 
         files_info = []
-        for item in absolute_file_paths(UPLOAD_FOLDER + "/" + webcam):
-            # for item in os.listdir(UPLOAD_FOLDER + "/" + webcam):
+        #for item in absolute_file_paths(UPLOAD_FOLDER + "/" + webcam):
+        for item in os.listdir(UPLOAD_FOLDER + "/" + webcam):
             _, file_ext = os.path.splitext(item)
             # Include files matching extension
             if file_ext.lower() not in extensions:
@@ -172,8 +178,8 @@ def files4movie(webcam, moviename):
     files_info = []
     extensions = ['.jpg']
     filter_movie_name = str(moviename).split("/", 1)[0][0:11].lower()
-    for item in absolute_file_paths(UPLOAD_FOLDER + "/" + webcam):
-        # for item in os.listdir(UPLOAD_FOLDER + "/" + webcam):
+    #for item in absolute_file_paths(UPLOAD_FOLDER + "/" + webcam):
+    for item in os.listdir(UPLOAD_FOLDER + "/" + webcam):
         _, file_ext = os.path.splitext(item)
         # Include files matching extension
         if file_ext.lower() not in extensions:
