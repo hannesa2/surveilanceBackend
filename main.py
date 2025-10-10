@@ -36,7 +36,7 @@ def absolute_file_paths(directory):
 @app.route('/version')
 def version():
     try:
-        return subprocess.check_output(['git', 'describe', '--tags']).decode('ascii').strip()
+        return subprocess.check_output(['git', 'describe', '--tags'], cwd=os.path.dirname(__file__)).decode('ascii').strip()
     except PermissionError:
         return jsonify({'error': 'Permission denied'}), 403
     except Exception as e:
@@ -60,7 +60,7 @@ def listFile(webcam):
             return jsonify({'error': 'Path is not a directory ' + UPLOAD_FOLDER + "/" + webcam}), 400
 
         files_info = []
-        #for item in absolute_file_paths(UPLOAD_FOLDER + "/" + webcam):
+        # for item in absolute_file_paths(UPLOAD_FOLDER + "/" + webcam):
         for item in os.listdir(UPLOAD_FOLDER + "/" + webcam):
             item_path = os.path.join(UPLOAD_FOLDER + "/" + webcam, item)
 
@@ -106,7 +106,7 @@ def list_movies(filetype, webcam):
             return jsonify({'error': 'Path is not a directory ' + UPLOAD_FOLDER + "/" + webcam}), 400
 
         files_info = []
-        #for item in absolute_file_paths(UPLOAD_FOLDER + "/" + webcam):
+        # for item in absolute_file_paths(UPLOAD_FOLDER + "/" + webcam):
         for item in os.listdir(UPLOAD_FOLDER + "/" + webcam):
             _, file_ext = os.path.splitext(item)
             # Include files matching extension
@@ -178,7 +178,7 @@ def files4movie(webcam, moviename):
     files_info = []
     extensions = ['.jpg']
     filter_movie_name = str(moviename).split("/", 1)[0][0:11].lower()
-    #for item in absolute_file_paths(UPLOAD_FOLDER + "/" + webcam):
+    # for item in absolute_file_paths(UPLOAD_FOLDER + "/" + webcam):
     for item in os.listdir(UPLOAD_FOLDER + "/" + webcam):
         _, file_ext = os.path.splitext(item)
         # Include files matching extension
