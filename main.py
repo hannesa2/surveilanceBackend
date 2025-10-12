@@ -6,15 +6,18 @@ import yaml
 from PIL import Image
 from flask import Flask, render_template, request, jsonify, send_file
 
+import tools
+from logfile import logfile_name, reverse_readline
+from tools import withWebCam, UPLOAD_FOLDER
+
 app = Flask(__name__, template_folder='templates')
 
-UPLOAD_FOLDER = "./files"
 
 if os.path.isfile('parameter.yml'):
     with open('parameter.yml', 'r') as file:
         prime_service = yaml.safe_load(file)
         if __name__ == '__main__':
-            UPLOAD_FOLDER = prime_service['file']['directory']
+            tools.UPLOAD_FOLDER = prime_service['file']['directory']
             print("Use from parameter.yml UPLOAD_FOLDER=" + UPLOAD_FOLDER)
 
 
@@ -22,10 +25,6 @@ if os.path.isfile('parameter.yml'):
 def index():
     print("I do >index<")
     return render_template('index.html', items=os.listdir(UPLOAD_FOLDER))
-
-
-def withWebCam(filename, webcam_name):
-    return UPLOAD_FOLDER + "/" + webcam_name + "/" + filename
 
 
 def absolute_file_paths(directory):
@@ -150,7 +149,7 @@ def delete_movie(webcam, filetype, name):
 @app.route('/log/<webcam>/<count>', methods=['GET'])
 def log(webcam, count):
     print("I do >/log/" + webcam + "/" + count + "<", request.method)
-    return "log not implemented"  # TODO
+    return jsonify(reverse_readline(withWebCam(logfile_name, webcam), int(count))), 200
 
 
 @app.route('/logpage/<webcam>/<count>/<skip>', methods=['GET'])
