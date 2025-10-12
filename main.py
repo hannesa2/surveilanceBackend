@@ -12,7 +12,6 @@ from tools import withWebCam
 
 app = Flask(__name__, template_folder='templates')
 
-
 if os.path.isfile('parameter.yml'):
     with open('parameter.yml', 'r') as file:
         prime_service = yaml.safe_load(file)
@@ -48,7 +47,8 @@ def version():
             pwd = subprocess.check_output(['pwd']).decode('ascii').strip()
             where = subprocess.check_output(['whereis', 'git']).decode('ascii').strip()
         except Exception as e_where:
-            jsonify({'error exception': str(e)}, {'whereis git': str(e_where)}, {'execute_path': str(execute_path)}, {'pwd': str(pwd)}, {'whoami': str(whoami)}), 500
+            jsonify({'error exception': str(e)}, {'whereis git': str(e_where)}, {'execute_path': str(execute_path)}, {'pwd': str(pwd)},
+                    {'whoami': str(whoami)}), 500
         return jsonify({'error': str(e)}, {'whereis git': str(where)}, {'execute_path': str(execute_path)}, {'pwd': str(pwd)}, {'whoami': str(whoami)}), 500
 
 
@@ -154,24 +154,29 @@ def delete_movie(webcam, filetype, name):
 @app.route('/log/<webcam>/<count>', methods=['GET'])
 def log(webcam, count):
     print("I do >/log/" + webcam + "/" + count + "<", request.method)
-    return jsonify(reverse_readline(withWebCam(logfile_name, webcam), int(count))), 200
+    return jsonify(reverse_readline(filename=withWebCam(logfile_name, webcam), count=int(count))), 200
 
 
 @app.route('/logpage/<webcam>/<count>/<skip>', methods=['GET'])
-def logpage(webcam, count, skip):
+def log_pagination(webcam, count, skip):
     print("I do >/logpage/" + webcam + "/" + count + "/" + skip + "<", request.method)
-    return "logpage not implemented"  # TODO
+    return jsonify(reverse_readline(filename=withWebCam(logfile_name, webcam),
+                                    skip_last=int(skip),
+                                    count=int(count))), 200
 
 
 @app.route('/brightness/<webcam>/<count>/<skip>', methods=['GET'])
 def brightness(webcam, count, skip):
     print("I do >/brightness/" + webcam + "/" + count + "/" + skip + "<", request.method)
-    return "brightness not implemented"  # TODO
+    return jsonify(reverse_readline(filename=withWebCam(logfile_name, webcam),
+                                    skip_last=int(skip),
+                                    search_string="Brightness",
+                                    count=int(count))), 200
 
 
 @app.route('/files4movie/<webcam>/<moviename>', methods=['GET'])
-def files4movie(webcam, moviename):
-    print("I do >/files4movie/" + webcam + "/" + moviename + "<", request.method)
+def files4movie(webcam, movie_name):
+    print("I do >/files4movie/" + webcam + "/" + movie_name + "<", request.method)
     # Validate path exists and is a directory
     if not os.path.exists(tools.UPLOAD_FOLDER + "/" + webcam):
         return jsonify({'error': 'Path does not exist ' + tools.UPLOAD_FOLDER + "/" + webcam}), 404
@@ -181,7 +186,7 @@ def files4movie(webcam, moviename):
 
     files_info = []
     extensions = ['.jpg']
-    filter_movie_name = str(moviename).split("/", 1)[0][0:11].lower()
+    filter_movie_name = str(movie_name).split("/", 1)[0][0:11].lower()
     # for item in absolute_file_paths(tools.UPLOAD_FOLDER + "/" + webcam):
     for item in os.listdir(tools.UPLOAD_FOLDER + "/" + webcam):
         _, file_ext = os.path.splitext(item)
@@ -243,8 +248,8 @@ def movie(webcam, name):
 
 
 @app.route('/pictures/img/<webcam>/<size>/<id>', methods=['GET'])
-def pictures(webcam, size, id):
-    print("I do >/pictures/" + webcam + "/" + size + "/" + id + "<", request.method)
+def pictures(webcam, size, _id):
+    print("I do >/pictures/" + webcam + "/" + size + "/" + _id + "<", request.method)
     return "pictures as bitmap not implemented"  # TODO
 
 

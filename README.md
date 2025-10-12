@@ -1,4 +1,4 @@
-# Master surveilance backend on latitude
+# Master surveillance backend on latitude
 
 ## Configure
 
@@ -19,10 +19,6 @@ sudo systemctl start kameraBackendPy.service
 
 http://127.0.0.1:5001
 
-### POST
-
-`curl -i -F "file=@/Path/to/your/file" http://127.0.0.1:5001/`
-
 ### GET
 
-`http://127.0.0.1:5001/uploads/<filenam>`
+`http://127.0.0.1:5001/log/pi3/100`
