@@ -1,4 +1,4 @@
 file:
-  directory: /some/path
+  directory: /daten/pi
 server:
   sub_url: /suburl

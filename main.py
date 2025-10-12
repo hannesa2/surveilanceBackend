@@ -8,7 +8,7 @@ from flask import Flask, render_template, request, jsonify, send_file
 
 import tools
 from logfile import logfile_name, reverse_readline
-from tools import withWebCam, UPLOAD_FOLDER
+from tools import withWebCam
 
 app = Flask(__name__, template_folder='templates')
 
@@ -18,13 +18,13 @@ if os.path.isfile('parameter.yml'):
         prime_service = yaml.safe_load(file)
         if __name__ == '__main__':
             tools.UPLOAD_FOLDER = prime_service['file']['directory']
-            print("Use from parameter.yml UPLOAD_FOLDER=" + UPLOAD_FOLDER)
+            print("Use from parameter.yml tools.UPLOAD_FOLDER=" + tools.UPLOAD_FOLDER)
 
 
 @app.route('/')
 def index():
     print("I do >index<")
-    return render_template('index.html', items=os.listdir(UPLOAD_FOLDER))
+    return render_template('index.html', items=os.listdir(tools.UPLOAD_FOLDER))
 
 
 def absolute_file_paths(directory):
@@ -57,16 +57,16 @@ def listFile(webcam):
     print("I do >/files/" + webcam + "<", request.method)
     if request.method == 'GET':
         # Validate path exists and is a directory
-        if not os.path.exists(UPLOAD_FOLDER + "/" + webcam):
-            return jsonify({'error': 'Path does not exist ' + UPLOAD_FOLDER + "/" + webcam}), 404
+        if not os.path.exists(tools.UPLOAD_FOLDER + "/" + webcam):
+            return jsonify({'error': 'Path does not exist ' + tools.UPLOAD_FOLDER + "/" + webcam}), 404
 
-        if not os.path.isdir(UPLOAD_FOLDER + "/" + webcam):
-            return jsonify({'error': 'Path is not a directory ' + UPLOAD_FOLDER + "/" + webcam}), 400
+        if not os.path.isdir(tools.UPLOAD_FOLDER + "/" + webcam):
+            return jsonify({'error': 'Path is not a directory ' + tools.UPLOAD_FOLDER + "/" + webcam}), 400
 
         files_info = []
-        # for item in absolute_file_paths(UPLOAD_FOLDER + "/" + webcam):
-        for item in os.listdir(UPLOAD_FOLDER + "/" + webcam):
-            item_path = os.path.join(UPLOAD_FOLDER + "/" + webcam, item)
+        # for item in absolute_file_paths(tools.UPLOAD_FOLDER + "/" + webcam):
+        for item in os.listdir(tools.UPLOAD_FOLDER + "/" + webcam):
+            item_path = os.path.join(tools.UPLOAD_FOLDER + "/" + webcam, item)
 
             stats = os.stat(item_path)
 
@@ -103,21 +103,21 @@ def list_movies(filetype, webcam):
 
     if request.method == 'GET':
         # Validate path exists and is a directory
-        if not os.path.exists(UPLOAD_FOLDER + "/" + webcam):
-            return jsonify({'error': 'Path does not exist ' + UPLOAD_FOLDER + "/" + webcam}), 404
+        if not os.path.exists(tools.UPLOAD_FOLDER + "/" + webcam):
+            return jsonify({'error': 'Path does not exist ' + tools.UPLOAD_FOLDER + "/" + webcam}), 404
 
-        if not os.path.isdir(UPLOAD_FOLDER + "/" + webcam):
-            return jsonify({'error': 'Path is not a directory ' + UPLOAD_FOLDER + "/" + webcam}), 400
+        if not os.path.isdir(tools.UPLOAD_FOLDER + "/" + webcam):
+            return jsonify({'error': 'Path is not a directory ' + tools.UPLOAD_FOLDER + "/" + webcam}), 400
 
         files_info = []
-        # for item in absolute_file_paths(UPLOAD_FOLDER + "/" + webcam):
-        for item in os.listdir(UPLOAD_FOLDER + "/" + webcam):
+        # for item in absolute_file_paths(tools.UPLOAD_FOLDER + "/" + webcam):
+        for item in os.listdir(tools.UPLOAD_FOLDER + "/" + webcam):
             _, file_ext = os.path.splitext(item)
             # Include files matching extension
             if file_ext.lower() not in extensions:
                 continue
 
-            item_path = os.path.join(UPLOAD_FOLDER + "/" + webcam, item)
+            item_path = os.path.join(tools.UPLOAD_FOLDER + "/" + webcam, item)
 
             stats = os.stat(item_path)
 
@@ -173,17 +173,17 @@ def brightness(webcam, count, skip):
 def files4movie(webcam, moviename):
     print("I do >/files4movie/" + webcam + "/" + moviename + "<", request.method)
     # Validate path exists and is a directory
-    if not os.path.exists(UPLOAD_FOLDER + "/" + webcam):
-        return jsonify({'error': 'Path does not exist ' + UPLOAD_FOLDER + "/" + webcam}), 404
+    if not os.path.exists(tools.UPLOAD_FOLDER + "/" + webcam):
+        return jsonify({'error': 'Path does not exist ' + tools.UPLOAD_FOLDER + "/" + webcam}), 404
 
-    if not os.path.isdir(UPLOAD_FOLDER + "/" + webcam):
-        return jsonify({'error': 'Path is not a directory ' + UPLOAD_FOLDER + "/" + webcam}), 400
+    if not os.path.isdir(tools.UPLOAD_FOLDER + "/" + webcam):
+        return jsonify({'error': 'Path is not a directory ' + tools.UPLOAD_FOLDER + "/" + webcam}), 400
 
     files_info = []
     extensions = ['.jpg']
     filter_movie_name = str(moviename).split("/", 1)[0][0:11].lower()
-    # for item in absolute_file_paths(UPLOAD_FOLDER + "/" + webcam):
-    for item in os.listdir(UPLOAD_FOLDER + "/" + webcam):
+    # for item in absolute_file_paths(tools.UPLOAD_FOLDER + "/" + webcam):
+    for item in os.listdir(tools.UPLOAD_FOLDER + "/" + webcam):
         _, file_ext = os.path.splitext(item)
         # Include files matching extension
         if file_ext.lower() not in extensions:
@@ -192,7 +192,7 @@ def files4movie(webcam, moviename):
         if item.find(filter_movie_name) == -1:
             continue
 
-        item_path = os.path.join(UPLOAD_FOLDER + "/" + webcam, item)
+        item_path = os.path.join(tools.UPLOAD_FOLDER + "/" + webcam, item)
 
         stats = os.stat(item_path)
 
@@ -264,13 +264,13 @@ def format_size(bytes_given):
 
 
 if __name__ == '__main__':
-    print("UPLOAD_FOLDER=" + UPLOAD_FOLDER)
-    # print("UPLOAD_FOLDER=" + str(Path.cwd()) + "/" + UPLOAD_FOLDER)
-    if not os.path.exists(UPLOAD_FOLDER):
-        os.makedirs(UPLOAD_FOLDER)
+    print("tools.UPLOAD_FOLDER=" + tools.UPLOAD_FOLDER)
+    # print("tools.UPLOAD_FOLDER=" + str(Path.cwd()) + "/" + tools.UPLOAD_FOLDER)
+    if not os.path.exists(tools.UPLOAD_FOLDER):
+        os.makedirs(tools.UPLOAD_FOLDER)
 
     app.secret_key = 'super secret key'
-    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+    app.config['tools.UPLOAD_FOLDER'] = tools.UPLOAD_FOLDER
     app.config['MAX_CONTENT_LENGTH'] = 6000024
-    items = os.listdir(UPLOAD_FOLDER)
+    items = os.listdir(tools.UPLOAD_FOLDER)
     app.run(host="0.0.0.0", debug=True, port=5001)
