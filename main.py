@@ -34,17 +34,22 @@ def absolute_file_paths(directory):
 
 @app.route('/version')
 def version():
+    execute_path = os.path.dirname(__file__)
     try:
-        return subprocess.check_output(['git', 'describe', '--tags'], cwd=os.path.dirname(__file__)).decode('ascii').strip()
+        return subprocess.check_output(['git', 'describe', '--tags'], cwd=execute_path).decode('ascii').strip()
     except PermissionError:
         return jsonify({'error': 'Permission denied'}), 403
     except Exception as e:
         where = "undefined"
+        pwd = "undefined"
+        whoami = "undefined"
         try:
+            whoami = subprocess.check_output(['whoami']).decode('ascii').strip()
+            pwd = subprocess.check_output(['pwd']).decode('ascii').strip()
             where = subprocess.check_output(['whereis', 'git']).decode('ascii').strip()
         except Exception as e_where:
-            jsonify({'error': str(e)}, {'whereis git': str(e_where)}), 500
-        return jsonify({'error': str(e)}, {'whereis git': str(where)}), 500
+            jsonify({'error exception': str(e)}, {'whereis git': str(e_where)}, {'execute_path': str(execute_path)}, {'pwd': str(pwd)}, {'whoami': str(whoami)}), 500
+        return jsonify({'error': str(e)}, {'whereis git': str(where)}, {'execute_path': str(execute_path)}, {'pwd': str(pwd)}, {'whoami': str(whoami)}), 500
 
 
 @app.route('/files/<webcam>', methods=['GET'])
