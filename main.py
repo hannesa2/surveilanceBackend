@@ -35,7 +35,9 @@ def absolute_file_paths(directory):
 def version():
     execute_path = os.path.dirname(__file__)
     try:
-        return subprocess.check_output(['git', 'describe', '--tags'], cwd=execute_path).decode('ascii').strip()
+        version_tag = subprocess.check_output(['git', 'describe', '--tags'], cwd=execute_path).decode('ascii').strip()
+        latest_commit = subprocess.check_output(['git', 'log', '-1', '--pretty=%B'], cwd=execute_path).decode('ascii').strip()
+        return jsonify({'version': str(version_tag)}, {'latestCommit': str(latest_commit)}), 200
     except PermissionError:
         return jsonify({'error': 'Permission denied'}), 403
     except Exception as e:
